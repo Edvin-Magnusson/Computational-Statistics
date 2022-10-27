@@ -1,0 +1,489 @@
+---
+title: "CompStat2022"
+author: "Edvin Magnusson"
+date: '2022-03-18'
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(BSDA)
+```
+
+### Question 1
+
+```{r}
+
+
+
+# Import dataset 
+kresseertrag <- read.table("C:/Users/edvin/Downloads/kresseertrag.dat", quote="\"", comment.char="")
+
+colnames(kresseertrag)<-c("Obs","fertilizer","yield")
+
+# 1a)
+
+kresseertrag$fertilizer_squared<- kresseertrag$fertilizer^2
+
+# Fit quadratic model 
+
+model <- lm(yield~fertilizer+fertilizer_squared,data = kresseertrag)
+summary(model)
+
+
+# 95% CI for the regression coefficients
+
+confint(model,level = 0.95)
+
+# Plotting Yield versus concentration of fertilizer
+
+plot(kresseertrag$fertilizer,kresseertrag$yield, xlab = "Fertilizer",ylab = "Yield")
+abline(lm( lm(yield~fertilizer,data = kresseertrag)))
+
+plot(kresseertrag$fertilizer_squared,kresseertrag$yield, xlab = "FertilizerSquared",ylab = "Yield")
+
+# 1b) 
+# Bootstrap 
+
+B<- 10000 # Replicates 
+b1<- c() # vector intercept
+b2<- c()
+b3<- c()
+for(i in 1:B){
+ x<- sample(1:length(kresseertrag$yield),size = length(kresseertrag$yield),replace = T)
+ intercept<- summary(lm(kresseertrag$yield[x]~kresseertrag$fertilizer[x]+kresseertrag$fertilizer_squared[x]))$coef[1]
+ slope1<- summary(lm(kresseertrag$yield[x]~kresseertrag$fertilizer[x]+kresseertrag$fertilizer_squared[x]))$coef[2]
+ slope2 <- summary(lm(kresseertrag$yield[x]~kresseertrag$fertilizer[x]+kresseertrag$fertilizer_squared[x]))$coef[3]
+ b1<- c(b1,intercept)
+ b2<- c(b2,slope1)
+ b3<-c(b3,slope2)
+}
+
+# CI for intercept
+bs1 <- sort(b1)
+ci95_1 <- c(bs1[round(B*0.025)], bs1[round(B*0.975)])
+round(ci95_1, 3)
+
+# CI for Beta1
+
+bs2 <- sort(b2)
+ci95_2 <- c(bs2[round(B*0.025)], bs2[round(B*0.975)])
+round(ci95_2, 3)
+
+# CI for Beta 2
+
+bs3 <- sort(b3)
+ci95_3 <- c(bs3[round(B*0.025)], bs3[round(B*0.975)])
+round(ci95_3, 3)
+
+hist(b3)
+
+# 1c) Comparison of Beta2
+
+hist(kresseertrag$fertilizer_squared,breaks = 20)
+
+
+
+# The regular CI for beta2 is wider and includes zero. This means we cannot be sure with 95% confidence if the effect
+# is positive or negative. 
+# I would recommend the bootstrap CI since it does not need any distributional assumptions. 
+# The distribution of the squared fertilizer variable is not normally distributed and it is therefore 
+# reasonable to use the bootstrap CI. 
+
+#1d) 
+
+# The bootstrap version of the CI include only negative numbers of the regression coefficient of beta1. 
+# This mean we can be sure with 95% confidence that the effect is negative on the yield.
+
+
+
+```
+
+### Question 2
+
+```{r}
+
+# Question 2
+# The power of the test is rejecting the null hypothesis given it is false.
+
+# 
+
+n <- 21 # sample size 
+mu0 <-0 # mean for the null hypothesis
+sd <- 1 # standarddeviation 
+sim<- 1000
+
+# Mean =0
+
+pvalues1 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0, sd)
+   pvalues1[i] <- (t.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p1<-mean(pvalues1)# Power of the first test 
+p1
+
+# Mean = 0.1
+
+pvalues2 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.1, sd)
+  pvalues2[i] <- (t.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p2<-mean(pvalues2)# Power of the first test 
+p2
+
+# Mean= 0.2 
+
+pvalues3 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.2, sd)
+  pvalues3[i] <- (t.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p3<-mean(pvalues3)# Power of the second test 
+p3
+
+# Mean = 0.4 
+
+pvalues4 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.4, sd)
+  pvalues4[i] <- (t.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p4<-mean(pvalues4)
+p4
+
+# Mean = 0.8 
+
+pvalues5 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.8, sd)
+  pvalues5[i] <- (t.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p5<-mean(pvalues5)
+p5
+
+
+# Mean = 1
+
+pvalues6 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 1, sd)
+  pvalues6[i] <- (t.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p6<-mean(pvalues6)
+p6
+
+
+# Simulating the power of the sign tests
+
+
+
+
+# Mean=0 
+
+pvalues11 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0, sd)
+  pvalues11[i] <- (SIGN.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p11<-mean(pvalues11)# Power of the first test 
+p11
+
+
+# Mean=0.1
+
+pvalues22 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.1, sd)
+  pvalues22[i] <- (SIGN.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p22<-mean(pvalues22)
+p22
+
+# Mean= 0.2 
+
+pvalues33 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.2, sd)
+  pvalues33[i] <- (SIGN.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p33<-mean(pvalues33)
+p33
+
+# Mean=0.4 
+
+pvalues44 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.4, sd)
+  pvalues44[i] <- (SIGN.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p44<-mean(pvalues44)
+p44
+
+# Mean=0.8 
+
+pvalues55 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 0.8, sd)
+  pvalues55[i] <- (SIGN.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p55<-mean(pvalues55)
+p55
+
+# Mean =1 
+
+pvalues66 <- c()
+for (i in 1:sim) {
+  x <- rnorm(n, 1, sd)
+  pvalues66[i] <- (SIGN.test(x, alternative = "greater")$p.value<0.10)
+}
+
+p66<-mean(pvalues66)
+p66
+
+# Creating vectors of the powers and corresponding mu
+# So we can plot the results
+
+PowerT<- c(p1,p2,p3,p4,p5,p6)
+MeanT <- c(0,0.1,0.2,0.4,0.8,1)
+
+PowerS<- c(p11,p22,p33,p44,p55,p66)
+MeanS <- c(0,0.1,0.2,0.4,0.8,1)
+
+
+
+
+# Plotting the power of the tests versus the mean 
+# Red line for the simulated t-tests
+# Blue line for the simulated signs tests. 
+
+plot(MeanT,PowerT, type="b", col="red", lwd=5, pch=15,ylab = "Power",xlab = "Mean")
+lines(MeanS,PowerS,type="b", col="blue", lwd=5, pch=15,ylab = "Power",xlab = "Mean")
+
+# The resuslting plot shows that the simulated sign tests has lower power than the simulated
+# T-tests. 
+
+
+
+```
+
+
+### Question 3
+
+```{r}
+
+
+
+# 3a) Sampling algorithms 
+
+# CDF= (x^2)/2+x when x is between -1< x < 0
+# x-(x^2)/2 when x is between 0<x<1
+# 0, otherwise 
+
+# Calculate the inverses
+# U= (x^2)/2+x , where U is uniform[0,1]
+# U= x-(x^2)/2 , where U is uniform[0,1]
+# I have the manual derivation on a separate paper included in the email      
+
+u<- runif(1000)
+x<- -1+sqrt(1-(1-u))
+y<- 1-sqrt(1-u)
+xy<- (1-sqrt(1-u))+(-1+sqrt(1-(1-u)))
+
+
+hist(y)
+hist(x)
+hist(xy,breaks = 20)
+
+
+
+# Histograms from the samples  
+
+# 3b) 
+
+func <- function(x){
+  (x>=-1)*(x<=0)*(x+1)+(x>0)*(x<=1)*(1-x)
+}
+
+x<- seq(from=-2,to=2,by=0.001)
+
+# Plot the function so we can choose an appropriate envelope
+
+plot(x,func(x),type = "l",)
+
+# For simplicity i choose to use an uniform envelope 
+
+e1 <- function(x){dunif(x,min = -1,max = 1)*2}
+
+lines(x, e1(x), type = "l")
+
+# x is between -1 and 1 and y is between 0 and 1
+
+set.seed(33)
+xax <- runif(10000,min = -1,max = 1)
+yax <- runif(10000,min = 0,max = 1)
+
+# accepting only the points that are in the triangle 
+
+XRandom <- xax[yax < (abs(xax) < 1) * (1 - abs(xax))]
+
+length(XRandom) # we accept about 50% of the simulated points
+hist(XRandom) # Histogram of the sample looks good
+
+
+
+# 3c)
+
+# Generating 10000 numbers from the triangle distribution 
+# Function from the lecture
+
+f1<- function(x){
+  (x>=0)*(x<=1)*(2-2*x)
+}
+
+# Function of -Y
+f2<- function(x){
+  (x>=-1)*(x<=0)*(2+2*x)
+}
+
+x <- seq(from=-2, to=2,by=0.001)
+plot(c(-2,2), c(0,3), type="n", xlab="x", ylab="density")
+lines(x, f1(x), lwd=3)
+lines(x, f2(x), lwd=3)
+
+# Composition alorithm 
+
+
+f3<- function(x){
+  (x>0)*(x<=1)*(2-2*x)+(x>=-1)*(x<=0)*(2+2*x)
+}
+
+x <- seq(from=-2, to=2,by=0.001)
+plot(c(-2,2), c(0,3), type="n", xlab="x", ylab="density")
+lines(x, f3(x), lwd=3)
+
+# Composition sampling 
+
+
+
+n <- 10000
+h <- rnorm(n, mean=0, sd=0.3)
+y <- runif(n,min=-1*h,max=h*1)
+hist(y,breaks = 20)
+
+# This is most likely wrong but i could not find any
+# instructions in the lecture notes or in the book on how to 
+# to this correctly....
+
+
+# 3d)
+# Sum of two uniform distributions 
+
+U1 <- runif(10000,min = -1,max = 0)
+U2 <-  runif(10000,min = 0,max = 1)
+Z<- U1+U2
+
+hist(Z)
+
+
+# I would prefer the rejection sampling method since it was simple 
+# and the resulting histogram had a nice shape. 
+
+
+
+
+
+```
+
+### Question 4 
+
+
+```{r}
+
+# Question 4
+
+# Target distribution 
+# Plotting the distribution to get a sense of it how it looks
+
+h <- function(x){
+  exp(-(x[1]-1)^2-(x[2]+2)^2+2*(x[1]-1)*(x[2]+2)-(abs(x[1]))-(abs(x[2])))
+}
+
+gridx1  <- seq(-5,5,length=1000) # x1 is the horisontal 
+gridx2  <- seq(-5,5,length=1000)
+grid    <- expand.grid(gridx1, gridx2)
+
+hgrid   <- matrix(apply(grid,1,h),nrow=1000)
+contour(gridx1,gridx2,hgrid)
+
+# By looking at the contour plot we can choose starting values in the middle of the distribution 
+# this will be around (2,-1).
+
+# For simplicity i will test the metropolis algorithm with two different proposal distributions that are 
+# uniformly distributed.  
+
+# The the number of loops can be increased to 100 000 here but it took to long time to
+# knit the markdown 
+
+Metropolis <- function(s=10000,Proposal){
+  x     <- c(2,-1) # Starting values for x1 and x2
+  xprev <- x
+  sample  <- c(x)
+  Accepts  <- 0    # Number of accepts
+  for(i in 1:s)
+  {
+    u     <- runif(2, min=-Proposal, max=Proposal) # Proposal distribution
+    xcandidate <- x + u
+    R     <- h(xcandidate)/h(x)
+    ap    <- runif(1)
+    if(ap<R) { 
+      x    <- xcandidate 
+      Accepts <- Accepts + 1
+    }
+    sample  <- rbind(sample,x)
+    if (i<=s) 
+    xprev <- x
+  }
+  accrate <- Accepts/s  # Acceptance rate
+  print(accrate)     
+  sample
+}
+
+
+Result1 <- Metropolis(Proposal=0.8) #  Acceptance rate of about 0.68
+Result2 <- Metropolis(Proposal = 1.2)# Acceptance rate of about  0.53
+
+
+hist(Result1)
+hist(Result2)
+
+# Based on the acceptance rates on the two proposal distributions i will use the second result
+# since the acceptance rate is a bit to high in the first result and the second one gives a 
+# acceptable acceptance rate of about 50% which is considered good
+
+# 4c)
+
+colMeans(Result2)
+
+
+# P(X1^2 + X2^2 ≤ 1).
+  
+mean(((Result1[,1])^2+((Result2[,2])^2)<=1)) 
+
+
+```
+
+

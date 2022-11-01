@@ -2,7 +2,7 @@
 
 In this repository I have uploaded my assignments from the course Computational Statistics from Stockholm University 
 - https://www.su.se/english/search-courses-and-programmes/st5101-1.516133 
-- I have uploaded the instructions and my answers in RMD format and in pdf format, but I would reccomend looking at the pdf files to see the output from the code.   
+- I have uploaded my answers in RMD format and in pdf format, but I would reccomend looking at the pdf files to see the output from the code.   
 
 ## Topics 
 ### Assignment 1 
